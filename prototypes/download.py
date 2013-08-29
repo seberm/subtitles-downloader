@@ -5,8 +5,8 @@ from pythonopensubtitles.opensubtitles import OpenSubtitles
 fd = OpenSubtitles()
 
 class Data(object):
-    username = 'bb'
-    password = 'dd'
+    username = 'down321'
+    password = 'downdown'
     name = 'Trance'
     path = ('/home/seberm/Downloads/'
             'Trance.2013 WEBRip XViD juggs')
