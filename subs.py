@@ -1,6 +1,8 @@
 import sys
 import os
 import logging
+import urllib2
+
 from logging import debug, info, error, warning, exception
 from optparse import OptionParser, OptionGroup
 
@@ -104,28 +106,18 @@ class Manager:
                         if not bestSubtitles or int(subs['SubDownloadsCnt']) > int(bestSubtitles['SubDownloadsCnt']):
                             bestSubtitles = subs
 
-                    print(bestSubtitles['SubDownloadsCnt'])
+                    if not bestSubtitles:
+                        error('[%s] No subtitles found' % f)
+                        continue
 
-        '''
+                    debug('[%s] Download link: %s' % (f, bestSubtitles['SubDownloadLink']))
 
-
-        import urllib2
-
-        for item in data:
-            print(item['SubDownloadLink'])
-            request = urllib2.Request(item['SubDownloadLink'])
-            response = urllib2.urlopen(request)
-
-            buf = StringIO(response.read())
-
-            data = gzip.GzipFile(fileobj=buf).read()
-            out = open('titles.srt', 'wb')
-            out.write(data)
-            out.close()
-
-            break
-        '''
-
+                    request = urllib2.Request(bestSubtitles['SubDownloadLink'])
+                    response = urllib2.urlopen(request)
+                    buf = StringIO(response.read())
+                    data = gzip.GzipFile(fileobj=buf).read()
+                    with open(os.path.join(path, os.path.splitext(f)[0] + '.srt'), 'wb') as out:
+                        out.write(data)
 
 
 
