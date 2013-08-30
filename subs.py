@@ -13,18 +13,12 @@ try:
     from pythonopensubtitles.opensubtitles import OpenSubtitles
 except ImportError:
     exception('Can\'t find pythonopensubtitles module!')
+    sys.exit(99)
 
 
 class Data(object):
     username = 'down321'
     password = 'downdown'
-    name = 'Trance'
-    path = ('/home/seberm/Downloads/'
-            'Trance.2013 WEBRip XViD juggs')
-
-    video = 'Trance.2013 WEBRip XViD juggs.avi'
-
-
 
 
 VERSION = '0.1-beta'
@@ -52,6 +46,7 @@ class Manager:
         debug('Logging to OpenSubtitles.org API server')
         self.__fd = OpenSubtitles()
         self.__recursiveDownload = False
+        self.__destination = None
         self.__language = language
         debug('Subtitle language is set to [%s]' % self.__language)
 
@@ -75,50 +70,64 @@ class Manager:
         self.__recursiveDownload = opt
 
 
+    def setDestination(self, dest):
+        self.__destination = dest
+
+
     def download(self):
         for arg in self.__args:
             self.__downloadSubtitles(arg)
 
 
+    def __getSubFile(self, f):
+        basename = os.path.basename(f)
+        if not videoFiletype(basename):
+            return
+
+        debug('Finding titles for: %s' % basename)
+
+        from pythonopensubtitles.utils import File
+        movie = File(f)
+        debug("[%s] Hash: %s" % (basename, movie.get_hash()))
+        debug("[%s] Size: %d Bytes" % (basename, movie.size))
+        subtitleData = self.__fd.search_subtitles([{'sublanguageid': self.__language, 'moviehash': movie.get_hash(), 'moviebytesize': movie.size}])
+        debug("[%s] Found %d subtitles" % (basename, len(subtitleData)))
+
+        # Get subtitles with the big number of downloads
+        bestSubtitles = None
+        for subs in subtitleData:
+            if not bestSubtitles or int(subs['SubDownloadsCnt']) > int(bestSubtitles['SubDownloadsCnt']):
+                bestSubtitles = subs
+
+        if not bestSubtitles:
+            error('[%s] No subtitles found' % basename)
+            return
+
+        debug('[%s] Download link: %s' % (basename, bestSubtitles['SubDownloadLink']))
+
+        request = urllib2.Request(bestSubtitles['SubDownloadLink'])
+        response = urllib2.urlopen(request)
+        buf = StringIO(response.read())
+        data = gzip.GzipFile(fileobj=buf).read()
+        dir = os.path.dirname(f)
+        if self.__destination:
+            dir = self.__destination
+
+        with open(os.path.join(dir, os.path.splitext(basename)[0] + '.srt'), 'wb') as out:
+            out.write(data)
+
+
+
     def __downloadSubtitles(self, path):
         '''Download subtitles for every movie in specified directory'''
-
         if os.path.isdir(path):
             for f in os.listdir(path):
                 if self.__recursiveDownload:
                     self.__downloadSubtitles(os.path.join(path, f))
 
-                if not videoFiletype(f):
-                    continue
-                else:
-                    debug('Finding titles for: %s' % f)
-
-                    from pythonopensubtitles.utils import File
-                    movie = File(os.path.join(path, f))
-                    debug("[%s] Hash: %s" % (f, movie.get_hash()))
-                    debug("[%s] Size: %d Bytes" % (f, movie.size))
-                    subtitleData = self.__fd.search_subtitles([{'sublanguageid': self.__language, 'moviehash': movie.get_hash(), 'moviebytesize': movie.size}])
-                    debug("[%s] Found %d subtitles" % (f, len(subtitleData)))
-
-                    # Get subtitles with the big number of downloads
-                    bestSubtitles = None
-                    for subs in subtitleData:
-                        if not bestSubtitles or int(subs['SubDownloadsCnt']) > int(bestSubtitles['SubDownloadsCnt']):
-                            bestSubtitles = subs
-
-                    if not bestSubtitles:
-                        error('[%s] No subtitles found' % f)
-                        continue
-
-                    debug('[%s] Download link: %s' % (f, bestSubtitles['SubDownloadLink']))
-
-                    request = urllib2.Request(bestSubtitles['SubDownloadLink'])
-                    response = urllib2.urlopen(request)
-                    buf = StringIO(response.read())
-                    data = gzip.GzipFile(fileobj=buf).read()
-                    with open(os.path.join(path, os.path.splitext(f)[0] + '.srt'), 'wb') as out:
-                        out.write(data)
-
+                self.__getSubFile(os.path.join(path, f))
+        else:
+            self.__getSubFile(path)
 
 
 
@@ -132,7 +141,7 @@ def main():
     options.add_option('-r', '--recursive', dest='recursiveDownload', action='store_true', default=False,
                        help='Recursive download throught directories')
     options.add_option('-l', '--language', dest='language', action='store', default=DEFAULT_SUBTITLES_LANGUAGE,
-                       help='Subtitles language (default: eng)')
+                       help='Subtitles language (default: eng) [eng, cze, ...]')
     options.add_option('-d', '--dest-dir', dest='destinationDir', action='store',
                        help='Directory where subtitles are saved')
     options.add_option('--log', dest='logLevel', action='store', default=DEFAULT_LOGGING_LEVEL,
@@ -152,12 +161,6 @@ def main():
         warning('It is not possible to set logging level to %s' % opt.logLevel.upper())
         warning('Using default setting logging level: %s' % DEFAULT_LOGGING_LEVEL)
 
-
-
-    if opt.destinationDir:
-        debug('Changing default program directory to %s' % opt.destinationDir)
-        os.chdir(opt.destinationDir)
-
     if not args:
         error('It\'s necessary to provide at least one argument')
         sys.exit(1)
@@ -165,6 +168,9 @@ def main():
     manager = Manager(args, language=opt.language)
     manager.login(Data.username, Data.password)
     manager.setRecursiveDownload(opt.recursiveDownload)
+
+    if opt.destinationDir:
+        manager.setDestination(opt.destinationDir)
 
     manager.download()
 
