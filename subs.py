@@ -11,6 +11,7 @@ import gzip
 
 try:
     from pythonopensubtitles.opensubtitles import OpenSubtitles
+    from pythonopensubtitles.utils import File
 except ImportError:
     exception('Can\'t find pythonopensubtitles module!')
     sys.exit(99)
@@ -40,7 +41,6 @@ def videoFiletype(file):
 
 class Manager:
     __fd = None
-
 
     def __init__(self, args, language=DEFAULT_SUBTITLES_LANGUAGE):
         debug('Logging to OpenSubtitles.org API server')
@@ -83,6 +83,7 @@ class Manager:
         for arg in self.__args:
             self.__downloadSubtitles(arg)
 
+
     def __get(self, title, f):
         debug('[%s] Download link: %s' % (os.path.basename(f), title['SubDownloadLink']))
 
@@ -107,13 +108,17 @@ class Manager:
         if not videoFiletype(basename):
             return
 
-        debug('Finding titles for: %s' % basename)
+        debug('Searching for titles: %s' % basename)
 
-        from pythonopensubtitles.utils import File
         movie = File(f)
         debug("[%s] Hash: %s" % (basename, movie.get_hash()))
         debug("[%s] Size: %d Bytes" % (basename, movie.size))
         subtitleData = self.__fd.search_subtitles([{'sublanguageid': self.__language, 'moviehash': movie.get_hash(), 'moviebytesize': movie.size}])
+
+        if not subtitleData:
+            error('[%s] No subtitles found (maybe incorrect movie file?)' % basename)
+            return
+
         debug("[%s] Found %d subtitles" % (basename, len(subtitleData)))
 
         # Get subtitles with the big number of downloads
@@ -129,11 +134,9 @@ class Manager:
         if self.__downloadAll:
             return
 
-        if not bestSubtitles:
-            error('[%s] No subtitles found' % basename)
-            return
-
-        self.__get(bestSubtitles, f)
+        if bestSubtitles:
+            debug("[%s] Downloading the BEST subtitles" % basename)
+            self.__get(bestSubtitles, f)
 
 
 
