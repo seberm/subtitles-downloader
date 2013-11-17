@@ -144,10 +144,10 @@ class Manager:
         '''Download subtitles for every movie in specified directory'''
         if os.path.isdir(path):
             for f in os.listdir(path):
-                if self.__recursiveDownload:
+                if os.path.isdir(os.path.join(path, f)) and self.__recursiveDownload:
                     self.__downloadSubtitles(os.path.join(path, f))
-
-                self.__getSubFile(os.path.join(path, f))
+                else:
+                    self.__getSubFile(os.path.join(path, f))
         else:
             self.__getSubFile(path)
 
