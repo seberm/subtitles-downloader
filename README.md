@@ -9,6 +9,13 @@ Dependencies
 * python2-opensubtitles
 
 
+Author
+------
+* Otto Sabart - Seberm
+* www.seberm.com
+* seberm[at]seberm[dot]com
+
+
 Usage & Options
 ---------------
 ```
@@ -34,7 +41,7 @@ Support: Otto Sabart (www.seberm.com / seberm@seberm.com
 ```
 
 ### Example usage
-Downloads the best czech subtitles for all movies in current directory and all subdirectories (recursive):
+Downloads the best czech subtitles for all movies in current directory and all subdirectories (recursively):
 
 ```
 $ cd ~/Movies
@@ -42,10 +49,12 @@ $ python2 ~/scripts/subs.py --log=debug --recursive --language=cze ./
 ```
 
 Download all english subtitles for given movie:
+```
 $ python2 ~/scripts/subs.py --all ~/Movies/Sherlock.avi
+```
 
 
-Possible language codes you can find [here](https://en.wikipedia.org/wiki/List_of_ISO_639-2_codes)
+Possible language codes you can find [here](https://en.wikipedia.org/wiki/List_of_ISO_639-2_codes).
 
 
 Todos
