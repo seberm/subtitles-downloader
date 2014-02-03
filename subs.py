@@ -156,7 +156,7 @@ class Manager:
 
     def __getSubFile(self, f):
         basename = os.path.basename(f)
-        if not videoFiletype(basename):
+        if not videoFiletype(f):
             debug('File is not a video: %s' % basename)
             return
 
@@ -194,14 +194,16 @@ class Manager:
 
     def __downloadSubtitles(self, path):
         '''Download subtitles for every movie in specified directory'''
-        if os.path.isdir(path):
-            for f in os.listdir(path):
-                if os.path.isdir(os.path.join(path, f)) and self.__recursiveDownload:
-                    self.__downloadSubtitles(os.path.join(path, f))
+        rPath = os.path.realpath(path)
+        if os.path.isdir(rPath):
+            for f in os.listdir(rPath):
+                nextPath = os.path.join(rPath, f)
+                if os.path.isdir(os.path.join(rPath, f)) and self.__recursiveDownload:
+                    self.__downloadSubtitles(nextPath)
                 else:
-                    self.__getSubFile(os.path.join(path, f))
+                    self.__getSubFile(nextPath)
         else:
-            self.__getSubFile(path)
+            self.__getSubFile(rPath)
 
 
 
