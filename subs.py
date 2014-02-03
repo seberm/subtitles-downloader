@@ -2,6 +2,7 @@ import sys
 import os
 import logging
 import urllib2
+import magic
 
 from logging import debug, info, error, warning, exception
 from optparse import OptionParser, OptionGroup
@@ -27,12 +28,59 @@ DEFAULT_LOGGING_LEVEL = 'info'
 DEFAULT_LOGGING_FORMAT = '%(levelname)s: %(message)s'
 
 DEFAULT_SUBTITLES_LANGUAGE = 'eng'
-VIDEO_TYPES = ['mp4', 'avi', 'wmv']
-
+VIDEO_MIME_TYPES = [
+    'application/annodex',
+    'application/mp4',
+    'application/ogg',
+    'application/vnd.rn-realmedia',
+    'application/x-matroska',
+    'video/3gpp',
+    'video/3gpp2',
+    'video/annodex',
+    'video/divx',
+    'video/flv',
+    'video/h264',
+    'video/mp4',
+    'video/mp4v-es',
+    'video/mpeg',
+    'video/mpeg-2',
+    'video/mpeg4',
+    'video/ogg',
+    'video/ogm',
+    'video/quicktime',
+    'video/ty',
+    'video/vdo',
+    'video/vivo',
+    'video/vnd.rn-realvideo',
+    'video/vnd.vivo',
+    'video/webm',
+    'video/x-bin',
+    'video/x-cdg',
+    'video/x-divx',
+    'video/x-dv',
+    'video/x-flv',
+    'video/x-la-asf',
+    'video/x-m4v',
+    'video/x-matroska',
+    'video/x-motion-jpeg',
+    'video/x-ms-asf',
+    'video/x-ms-dvr',
+    'video/x-ms-wm',
+    'video/x-ms-wmv',
+    'video/x-msvideo',
+    'video/x-sgi-movie',
+    'video/x-tivo',
+    'video/avi',
+    'video/x-ms-asx',
+    'video/x-ms-wvx',
+    'video/x-ms-wmx'
+]
 
 def videoFiletype(file):
-    postfix = file.split(".")[-1]
-    if postfix in VIDEO_TYPES:
+    mimeType = magic.from_file(file, mime=True)
+
+    if mimeType in VIDEO_MIME_TYPES:
+        debug("Detected mime-type: %s" % mimeType)
         return True
     else:
         return False
@@ -106,6 +154,7 @@ class Manager:
     def __getSubFile(self, f):
         basename = os.path.basename(f)
         if not videoFiletype(basename):
+            debug('File is not a video: %s' % basename)
             return
 
         debug('Searching for titles: %s' % basename)
