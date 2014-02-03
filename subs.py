@@ -147,7 +147,7 @@ class Manager:
 
         postfix = ''
         if self.__downloadAll:
-            postfix = '_' + str(self.__subtitleCounter)
+            postfix = "_%d"  % self.__subtitleCounter
             self.__subtitleCounter += 1
 
         with open(os.path.join(dir, os.path.splitext(os.path.basename(f))[0] + postfix + '.srt'), 'wb') as out:
