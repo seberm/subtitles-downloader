@@ -208,7 +208,7 @@ class Manager:
 def main():
     parser = OptionParser(description = '%prog Download subtitles for movies from OpenSubtitles',
                           usage = '%prog [OPTION]... DIR[S]',
-                          epilog = 'Support: Otto Sabart (www.seberm.com / seberm@gmail.com',
+                          epilog = 'Support: Otto Sabart (www.seberm.com / seberm@seberm.com',
                           version = '%prog' + VERSION)
 
     options = OptionGroup(parser, 'Options')
@@ -217,7 +217,7 @@ def main():
     options.add_option('-a', '--all', dest='allSubtitles', action='store_true', default=False,
                        help='Download all found subtitles for specified movie')
     options.add_option('-l', '--language', dest='language', action='store', default=DEFAULT_SUBTITLES_LANGUAGE,
-                       help='Subtitles language (default: eng) [eng, cze, ...]')
+                       help='Subtitles language (default: eng) [eng, cze, fre, ..., all]')
     options.add_option('-d', '--dest-dir', dest='destinationDir', action='store',
                        help='Directory where subtitles are saved')
     options.add_option('--log', dest='logLevel', action='store', default=DEFAULT_LOGGING_LEVEL,
