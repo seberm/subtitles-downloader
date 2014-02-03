@@ -89,6 +89,8 @@ def videoFiletype(file):
 
 class Manager:
     __fd = None
+    __subtitleCounter = 0
+
 
     def __init__(self, args, language=DEFAULT_SUBTITLES_LANGUAGE):
         debug('Logging to OpenSubtitles.org API server')
@@ -145,7 +147,8 @@ class Manager:
 
         postfix = ''
         if self.__downloadAll:
-            postfix = '_' + title['IDSubtitle']
+            postfix = '_' + str(self.__subtitleCounter)
+            self.__subtitleCounter += 1
 
         with open(os.path.join(dir, os.path.splitext(os.path.basename(f))[0] + postfix + '.srt'), 'wb') as out:
             out.write(data)
@@ -170,7 +173,7 @@ class Manager:
 
         debug("[%s] Found %d subtitles" % (basename, len(subtitleData)))
 
-        # Get subtitles with the big number of downloads
+        # Get subtitles with the big number of downloads - We try to find the best subtitles for our movie
         bestSubtitles = None
         for subs in subtitleData:
             if self.__downloadAll:
