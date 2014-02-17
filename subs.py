@@ -197,23 +197,27 @@ class Manager:
 
         debug("[%s] Found %d subtitles" % (basename, len(subtitleData)))
 
-        # Get subtitles with the big number of downloads - We try to find the best subtitles for our movie
-        bestSubtitles = None
-        for subs in subtitleData:
-            if self.__downloadAll:
-                self.__get(subs, f)
-                continue
+        if self.__downloadAll:
+            for subs in subtitleData:
+                if self.__downloadAll:
+                    self.__get(subs, f)
+        else:
+            # We try to find the best subtitles for our movie
+            bestSubtitles = self.__findBestTitles(subtitleData)
+            if bestSubtitles:
+                debug("[%s] Downloading the BEST subtitles" % basename)
+                self.__get(bestSubtitles, f)
 
+
+    def __findBestTitles(self, subtitles):
+        '''Get subtitles with the big number of downloads'''
+        bestSubtitles = None
+        for subs in subtitles:
+            # TODO There will be algorithm for finding the best subtitles
             if not bestSubtitles or int(subs['SubDownloadsCnt']) > int(bestSubtitles['SubDownloadsCnt']):
                 bestSubtitles = subs
 
-        if self.__downloadAll:
-            return
-
-        if bestSubtitles:
-            debug("[%s] Downloading the BEST subtitles" % basename)
-            self.__get(bestSubtitles, f)
-
+        return bestSubtitles
 
 
     def __downloadSubtitles(self, path):
