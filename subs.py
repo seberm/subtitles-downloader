@@ -3,6 +3,7 @@ import os
 import logging
 import urllib2
 import magic
+import math
 
 from logging import debug, info, error, warning, exception
 from optparse import OptionParser, OptionGroup
@@ -17,6 +18,12 @@ except ImportError:
     exception('Can\'t find pythonopensubtitles module!')
     sys.exit(99)
 
+try:
+    import pysrt
+except ImportError:
+    exception('Can\'t find pysrt module!')
+    warning('Download subtitles by subtitle template will not work')
+
 
 class Data(object):
     username = 'down321'
@@ -26,6 +33,9 @@ class Data(object):
 VERSION = '0.1-beta'
 DEFAULT_LOGGING_LEVEL = 'info'
 DEFAULT_LOGGING_FORMAT = '%(levelname)s: %(message)s'
+
+REF_TITLES_SAMPLING = 30 # Seconds
+TITLES_ITEM_OFFSET = 1 # Second
 
 DEFAULT_SUBTITLES_LANGUAGE = 'eng'
 VIDEO_MIME_TYPES = [
@@ -169,7 +179,7 @@ class Manager:
             dir = self.__destination
 
         postfix = ''
-        if self.__downloadAll:
+        if self.__downloadAll or self.__refTitles:
             postfix = "_%d"  % self.__subtitleCounter
             self.__subtitleCounter += 1
 
@@ -177,10 +187,12 @@ class Manager:
         if os.path.isfile(subFilename) and not self.__force:
             if not confirm("Subtitle file already exists. Do you really want to overwrite it?"):
                 debug("We're not overwriting ...")
-                return
+                return None
 
         with open(subFilename, 'wb') as out:
             out.write(data)
+
+        return subFilename
 
 
     def __getSubFile(self, f):
@@ -202,16 +214,69 @@ class Manager:
 
         debug("[%s] Found %d subtitles" % (basename, len(subtitleData)))
 
-        if self.__downloadAll:
+        if self.__refTitles:
+            titles = []
             for subs in subtitleData:
-                if self.__downloadAll:
-                    self.__get(subs, f)
+                fileName = self.__get(subs, f)
+                if fileName:
+                    titles.append(fileName)
+
+            scores = []
+            for t in titles:
+                refItems = self.doSampling(self.__refTitles)
+                testItems = self.doSampling(t)
+
+                scores.append({'filename' : t, 'score' : self.getMatchScore(refItems, testItems)})
+
+            ##### DEBUG
+            for x in scores:
+                print x['filename']
+                print x['score']
+            ########
+
+
+        elif self.__downloadAll:
+            for subs in subtitleData:
+                self.__get(subs, f)
+
         else:
             # We try to find the best subtitles for our movie
             bestSubtitles = self.__findBestTitles(subtitleData)
             if bestSubtitles:
                 debug("[%s] Downloading the BEST subtitles" % basename)
                 self.__get(bestSubtitles, f)
+
+
+    def getMatchScore(self, refItems, testItems):
+        score = 0
+
+        for rItem in refItems:
+            startSecsRef = rItem.start.hours * 60 * 60 + rItem.start.minutes * 60 + rItem.start.seconds
+            endSecsRef = rItem.end.hours * 60 * 60 + rItem.end.minutes * 60 + rItem.end.seconds
+
+            for tItem in testItems:
+                startSecsTest = tItem.start.hours * 60 * 60 + tItem.start.minutes * 60 + tItem.start.seconds
+                endSecsTest = tItem.end.hours * 60 * 60 + tItem.end.minutes * 60 + tItem.end.seconds
+                
+                if math.fabs(startSecsRef - startSecsTest) <= TITLES_ITEM_OFFSET and math.fabs(endSecsRef - endSecsTest) <= TITLES_ITEM_OFFSET:
+                    score += 1
+
+        return score
+
+
+    def doSampling(self, f):
+        '''Do a sampling on a start time of subtitles'''
+        subs = pysrt.open(f)
+        time = 0
+        sampledItems = []
+
+        for item in subs:
+            startSecs = item.start.hours * 60 * 60 + item.start.minutes * 60 + item.start.seconds
+            if  startSecs > time:
+                sampledItems.append(item)
+                time = startSecs + REF_TITLES_SAMPLING
+
+        return sampledItems
 
 
     def __findBestTitles(self, subtitles):
