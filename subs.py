@@ -113,6 +113,7 @@ class Manager:
         self.__destination = None
         self.__language = language
         self.__force = False
+        self.__refTitles = None
         debug('Subtitle language is set to [%s]' % self.__language)
 
         self.__args = args
@@ -137,6 +138,10 @@ class Manager:
 
     def setForce(self, opt=True):
         self.__force = opt
+
+
+    def setRefTitles(self, t):
+        self.__refTitles = t
 
 
     def setDestination(self, dest):
@@ -252,6 +257,8 @@ def main():
                        help='Subtitles language (default: eng) [eng, cze, fre, ..., all]')
     options.add_option('-d', '--dest-dir', dest='destinationDir', action='store',
                        help='Directory where subtitles are saved')
+    options.add_option('--ref-titles', dest='refTitles', action='store',
+                       help='Template subtitles - program will try to find the most similar subtitles in given language')
     options.add_option('--log', dest='logLevel', action='store', default=DEFAULT_LOGGING_LEVEL,
                         help='Set logging level (debug, info, warning, error, critical)')
 
@@ -277,6 +284,13 @@ def main():
     manager.login(Data.username, Data.password)
     manager.setRecursiveDownload(opt.recursiveDownload)
     manager.setForce(opt.force)
+
+    if opt.refTitles:
+        if opt.recursiveDownload:
+            error("You cannot use --recursive and --ref-titles arguments togetner. Exiting ...")
+            return
+
+        manager.setRefTitles(opt.refTitles)
 
     if opt.allSubtitles:
         manager.downloadAllSubtitles()
