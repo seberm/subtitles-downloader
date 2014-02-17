@@ -168,7 +168,7 @@ class Manager:
             postfix = "_%d"  % self.__subtitleCounter
             self.__subtitleCounter += 1
 
-        subFilename = os.path.join(dir, os.path.splitext(os.path.basename(f))[0] + postfix + '.srt')
+        subFilename = os.path.join(dir, os.path.splitext(os.path.basename(f))[0] + postfix + "." + title['SubFormat'])
         if os.path.isfile(subFilename) and not self.__force:
             if not confirm("Subtitle file already exists. Do you really want to overwrite it?"):
                 debug("We're not overwriting ...")
