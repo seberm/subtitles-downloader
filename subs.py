@@ -212,7 +212,7 @@ class Manager:
             error('[%s] No subtitles found (maybe incorrect movie file?)' % basename)
             return
 
-        debug("[%s] Found %d subtitles" % (basename, len(subtitleData)))
+        info("[%s] Found %d subtitles" % (basename, len(subtitleData)))
 
         if self.__refTitles:
             titles = []
@@ -222,17 +222,25 @@ class Manager:
                     titles.append(fileName)
 
             scores = []
+            refItems = self.doSampling(self.__refTitles)
             for t in titles:
-                refItems = self.doSampling(self.__refTitles)
                 testItems = self.doSampling(t)
 
-                scores.append({'filename' : t, 'score' : self.getMatchScore(refItems, testItems)})
+                score = self.getMatchScore(refItems, testItems)
+                info("[Score: %d]: %s" % (score, t))
+                scores.append((score, t))
 
-            ##### DEBUG
-            for x in scores:
-                print x['filename']
-                print x['score']
-            ########
+            scores.sort()
+
+            if scores:
+                scr, match = scores.pop()
+                debug('Renaming best subtitle match to movie name')
+                os.rename(match, os.path.splitext(os.path.basename(f))[0] + os.path.splitext(match)[1])
+
+                if not self.__downloadAll:
+                    info('Removing unnecessary subtitles ... (if you don\'t want to remove them, try --all argument')
+                    for s, ff in scores:
+                        os.unlink(ff)
 
 
         elif self.__downloadAll:
@@ -266,6 +274,7 @@ class Manager:
 
     def doSampling(self, f):
         '''Do a sampling on a start time of subtitles'''
+        debug("Sampling subtitle file: %s" % f)
         subs = pysrt.open(f)
         time = 0
         sampledItems = []
@@ -355,6 +364,7 @@ def main():
             error("You cannot use --recursive and --ref-titles arguments togetner. Exiting ...")
             return
 
+        debug("Set reference subtitles: %s" % opt.refTitles)
         manager.setRefTitles(opt.refTitles)
 
     if opt.allSubtitles:
