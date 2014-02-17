@@ -61,5 +61,4 @@ Todos
 -----
 ```
 - Possibility to provide (via params) login and password for OpenSubtitles API
-- If a file with the subtitles already exists - we should ask if user wants to overwrite it!
 ```

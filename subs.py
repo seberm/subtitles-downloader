@@ -85,6 +85,19 @@ def videoFiletype(file):
     else:
         return False
 
+def confirm(msg):
+    yes = ['yes', 'y']
+    no = ['no', 'n', '']
+
+    while True:
+        print msg + "[y/N]:",
+        ch = raw_input().lower()
+        if ch in yes:
+            return True
+        elif ch in no:
+            return False
+        else:
+            info("Unrecognized choice")
 
 
 class Manager:
@@ -99,6 +112,7 @@ class Manager:
         self.__downloadAll = False
         self.__destination = None
         self.__language = language
+        self.__force = False
         debug('Subtitle language is set to [%s]' % self.__language)
 
         self.__args = args
@@ -119,6 +133,10 @@ class Manager:
 
     def setRecursiveDownload(self, opt=True):
         self.__recursiveDownload = opt
+
+
+    def setForce(self, opt=True):
+        self.__force = opt
 
 
     def setDestination(self, dest):
@@ -150,7 +168,13 @@ class Manager:
             postfix = "_%d"  % self.__subtitleCounter
             self.__subtitleCounter += 1
 
-        with open(os.path.join(dir, os.path.splitext(os.path.basename(f))[0] + postfix + '.srt'), 'wb') as out:
+        subFilename = os.path.join(dir, os.path.splitext(os.path.basename(f))[0] + postfix + '.srt')
+        if os.path.isfile(subFilename) and not self.__force:
+            if not confirm("Subtitle file already exists. Do you really want to overwrite it?"):
+                debug("We're not overwriting ...")
+                return
+
+        with open(subFilename, 'wb') as out:
             out.write(data)
 
 
@@ -218,6 +242,8 @@ def main():
                        help='Recursive download throught directories')
     options.add_option('-a', '--all', dest='allSubtitles', action='store_true', default=False,
                        help='Download all found subtitles for specified movie')
+    options.add_option('-f', '--force', dest='force', action='store_true', default=False,
+                       help='Overwrite subtitles if they already exist')
     options.add_option('-l', '--language', dest='language', action='store', default=DEFAULT_SUBTITLES_LANGUAGE,
                        help='Subtitles language (default: eng) [eng, cze, fre, ..., all]')
     options.add_option('-d', '--dest-dir', dest='destinationDir', action='store',
@@ -246,6 +272,7 @@ def main():
     manager = Manager(args, language=opt.language)
     manager.login(Data.username, Data.password)
     manager.setRecursiveDownload(opt.recursiveDownload)
+    manager.setForce(opt.force)
 
     if opt.allSubtitles:
         manager.downloadAllSubtitles()
