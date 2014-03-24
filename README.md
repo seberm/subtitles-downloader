@@ -30,10 +30,15 @@ Options:
   Options:
     -r, --recursive     Recursive download throught directories
     -a, --all           Download all found subtitles for specified movie
+    -f, --force         Overwrite subtitles if they already exist
     -l LANGUAGE, --language=LANGUAGE
-                        Subtitles language (default: eng) [eng, cze, fre, ..., all]
+                        Subtitles language (default: eng) [eng, cze, fre, ...,
+                        all]
     -d DESTINATIONDIR, --dest-dir=DESTINATIONDIR
                         Directory where subtitles are saved
+    --ref-titles=REFTITLES
+                        Template subtitles - program will try to find the most
+                        similar subtitles in given language
     --log=LOGLEVEL      Set logging level (debug, info, warning, error,
                         critical)
 
@@ -61,4 +66,5 @@ Todos
 -----
 ```
 - Possibility to provide (via params) login and password for OpenSubtitles API
+- Use argparse instead of optparse (cause it's deprecated)
 ```
