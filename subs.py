@@ -34,8 +34,8 @@ VERSION = '0.1-beta'
 DEFAULT_LOGGING_LEVEL = 'info'
 DEFAULT_LOGGING_FORMAT = '%(levelname)s: %(message)s'
 
-REF_TITLES_SAMPLING = 30 # Seconds
-TITLES_ITEM_OFFSET = 1 # Second
+REF_TITLES_SAMPLING = 30  # Seconds
+TITLES_ITEM_OFFSET = 1  # Second
 
 DEFAULT_SUBTITLES_LANGUAGE = 'eng'
 VIDEO_MIME_TYPES = [
@@ -86,6 +86,7 @@ VIDEO_MIME_TYPES = [
     'video/x-ms-wmx'
 ]
 
+
 def videoFiletype(file):
     mimeType = magic.from_file(file, mime=True)
 
@@ -94,6 +95,7 @@ def videoFiletype(file):
         return True
     else:
         return False
+
 
 def confirm(msg):
     yes = ['yes', 'y']
@@ -114,7 +116,6 @@ class Manager:
     __fd = None
     __subtitleCounter = 0
 
-
     def __init__(self, args, language=DEFAULT_SUBTITLES_LANGUAGE):
         debug('Logging to OpenSubtitles.org API server')
         self.__fd = OpenSubtitles()
@@ -128,11 +129,9 @@ class Manager:
 
         self.__args = args
 
-
     def __del__(self):
         debug('Logouting from OpenSubtitles.org API server')
         self.__fd.logout()
-
 
     def login(self, login, password):
         token = self.__fd.login(login, password)
@@ -141,34 +140,28 @@ class Manager:
 
         debug('Login token %s' % token)
 
-
     def setRecursiveDownload(self, opt=True):
         self.__recursiveDownload = opt
-
 
     def setForce(self, opt=True):
         self.__force = opt
 
-
     def setRefTitles(self, t):
         self.__refTitles = t
-
 
     def setDestination(self, dest):
         self.__destination = dest
 
-
     def downloadAllSubtitles(self, opt=True):
         self.__downloadAll = opt
-
 
     def download(self):
         for arg in self.__args:
             self.__downloadSubtitles(arg)
 
-
     def __get(self, title, f):
-        debug('[%s] Download link: %s' % (os.path.basename(f), title['SubDownloadLink']))
+        debug('[%s] Download link: %s' %
+              (os.path.basename(f), title['SubDownloadLink']))
 
         request = urllib2.Request(title['SubDownloadLink'])
         response = urllib2.urlopen(request)
@@ -180,10 +173,11 @@ class Manager:
 
         postfix = ''
         if self.__downloadAll or self.__refTitles:
-            postfix = "_%d"  % self.__subtitleCounter
+            postfix = "_%d" % self.__subtitleCounter
             self.__subtitleCounter += 1
 
-        subFilename = os.path.join(dir, os.path.splitext(os.path.basename(f))[0] + postfix + "." + title['SubFormat'])
+        subFilename = os.path.join(dir, os.path.splitext(
+            os.path.basename(f))[0] + postfix + "." + title['SubFormat'])
         if os.path.isfile(subFilename) and not self.__force:
             if not confirm("Subtitle file already exists. Do you really want to overwrite it?"):
                 debug("We're not overwriting ...")
@@ -193,7 +187,6 @@ class Manager:
             out.write(data)
 
         return subFilename
-
 
     def __getSubFile(self, f):
         basename = os.path.basename(f)
@@ -206,10 +199,12 @@ class Manager:
         movie = File(f)
         debug("[%s] Hash: %s" % (basename, movie.get_hash()))
         debug("[%s] Size: %d Bytes" % (basename, movie.size))
-        subtitleData = self.__fd.search_subtitles([{'sublanguageid': self.__language, 'moviehash': movie.get_hash(), 'moviebytesize': movie.size}])
+        subtitleData = self.__fd.search_subtitles(
+            [{'sublanguageid': self.__language, 'moviehash': movie.get_hash(), 'moviebytesize': movie.size}])
 
         if not subtitleData:
-            error('[%s] No subtitles found (maybe incorrect movie file?)' % basename)
+            error('[%s] No subtitles found (maybe incorrect movie file?)' %
+                  basename)
             return
 
         info("[%s] Found %d subtitles" % (basename, len(subtitleData)))
@@ -235,13 +230,14 @@ class Manager:
             if scores:
                 scr, match = scores.pop()
                 debug('Renaming best subtitle match to movie name')
-                os.rename(match, os.path.splitext(os.path.basename(f))[0] + os.path.splitext(match)[1])
+                os.rename(match, os.path.splitext(
+                    os.path.basename(f))[0] + os.path.splitext(match)[1])
 
                 if not self.__downloadAll:
-                    info('Removing unnecessary subtitles ... (if you don\'t want to remove them, try --all argument')
+                    info(
+                        'Removing unnecessary subtitles ... (if you don\'t want to remove them, try --all argument')
                     for s, ff in scores:
                         os.unlink(ff)
-
 
         elif self.__downloadAll:
             for subs in subtitleData:
@@ -254,23 +250,25 @@ class Manager:
                 debug("[%s] Downloading the BEST subtitles" % basename)
                 self.__get(bestSubtitles, f)
 
-
     def getMatchScore(self, refItems, testItems):
         score = 0
 
         for rItem in refItems:
-            startSecsRef = rItem.start.hours * 60 * 60 + rItem.start.minutes * 60 + rItem.start.seconds
-            endSecsRef = rItem.end.hours * 60 * 60 + rItem.end.minutes * 60 + rItem.end.seconds
+            startSecsRef = rItem.start.hours * 60 * 60 + \
+                rItem.start.minutes * 60 + rItem.start.seconds
+            endSecsRef = rItem.end.hours * 60 * 60 + \
+                rItem.end.minutes * 60 + rItem.end.seconds
 
             for tItem in testItems:
-                startSecsTest = tItem.start.hours * 60 * 60 + tItem.start.minutes * 60 + tItem.start.seconds
-                endSecsTest = tItem.end.hours * 60 * 60 + tItem.end.minutes * 60 + tItem.end.seconds
-                
+                startSecsTest = tItem.start.hours * 60 * 60 + \
+                    tItem.start.minutes * 60 + tItem.start.seconds
+                endSecsTest = tItem.end.hours * 60 * 60 + \
+                    tItem.end.minutes * 60 + tItem.end.seconds
+
                 if math.fabs(startSecsRef - startSecsTest) <= TITLES_ITEM_OFFSET and math.fabs(endSecsRef - endSecsTest) <= TITLES_ITEM_OFFSET:
                     score += 1
 
         return score
-
 
     def doSampling(self, f):
         '''Do a sampling on a start time of subtitles'''
@@ -280,13 +278,13 @@ class Manager:
         sampledItems = []
 
         for item in subs:
-            startSecs = item.start.hours * 60 * 60 + item.start.minutes * 60 + item.start.seconds
-            if  startSecs > time:
+            startSecs = item.start.hours * 60 * 60 + \
+                item.start.minutes * 60 + item.start.seconds
+            if startSecs > time:
                 sampledItems.append(item)
                 time = startSecs + REF_TITLES_SAMPLING
 
         return sampledItems
-
 
     def __findBestTitles(self, subtitles):
         '''Get subtitles with the big number of downloads'''
@@ -297,7 +295,6 @@ class Manager:
                 bestSubtitles = subs
 
         return bestSubtitles
-
 
     def __downloadSubtitles(self, path):
         '''Download subtitles for every movie in specified directory'''
@@ -313,42 +310,50 @@ class Manager:
             self.__getSubFile(rPath)
 
 
-
 def main():
-    parser = OptionParser(description = '%prog Download subtitles for movies from OpenSubtitles',
-                          usage = '%prog [OPTION]... DIR[S]',
-                          epilog = 'Support: Otto Sabart (www.seberm.com / seberm@seberm.com',
-                          version = '%prog' + VERSION)
+    parser = OptionParser(
+        description='%prog Download subtitles for movies from OpenSubtitles',
+        usage='%prog [OPTION]... DIR[S]',
+        epilog='Support: Otto Sabart (www.seberm.com / seberm@seberm.com',
+        version='%prog' + VERSION)
 
     options = OptionGroup(parser, 'Options')
-    options.add_option('-r', '--recursive', dest='recursiveDownload', action='store_true', default=False,
-                       help='Recursive download throught directories')
-    options.add_option('-a', '--all', dest='allSubtitles', action='store_true', default=False,
-                       help='Download all found subtitles for specified movie')
-    options.add_option('-f', '--force', dest='force', action='store_true', default=False,
-                       help='Overwrite subtitles if they already exist')
-    options.add_option('-l', '--language', dest='language', action='store', default=DEFAULT_SUBTITLES_LANGUAGE,
-                       help='Subtitles language (default: eng) [eng, cze, fre, ..., all]')
-    options.add_option('-d', '--dest-dir', dest='destinationDir', action='store',
-                       help='Directory where subtitles are saved')
+    options.add_option(
+        '-r', '--recursive', dest='recursiveDownload', action='store_true', default=False,
+        help='Recursive download throught directories')
+    options.add_option(
+        '-a', '--all', dest='allSubtitles', action='store_true', default=False,
+        help='Download all found subtitles for specified movie')
+    options.add_option(
+        '-f', '--force', dest='force', action='store_true', default=False,
+        help='Overwrite subtitles if they already exist')
+    options.add_option(
+        '-l', '--language', dest='language', action='store', default=DEFAULT_SUBTITLES_LANGUAGE,
+        help='Subtitles language (default: eng) [eng, cze, fre, ..., all]')
+    options.add_option(
+        '-d', '--dest-dir', dest='destinationDir', action='store',
+        help='Directory where subtitles are saved')
     options.add_option('--ref-titles', dest='refTitles', action='store',
                        help='Template subtitles - program will try to find the most similar subtitles in given language')
-    options.add_option('--log', dest='logLevel', action='store', default=DEFAULT_LOGGING_LEVEL,
-                        help='Set logging level (debug, info, warning, error, critical)')
-
+    options.add_option(
+        '--log', dest='logLevel', action='store', default=DEFAULT_LOGGING_LEVEL,
+                      help='Set logging level (debug, info, warning, error, critical)')
 
     parser.add_option_group(options)
     (opt, args) = parser.parse_args()
 
-
     # Logging stuff
     try:
-        logging.basicConfig(format=DEFAULT_LOGGING_FORMAT, level=opt.logLevel.upper())
+        logging.basicConfig(
+            format=DEFAULT_LOGGING_FORMAT, level=opt.logLevel.upper())
         debug('Setting logging mode to: %s' % opt.logLevel.upper())
     except ValueError:
-        logging.basicConfig(format=DEFAULT_LOGGING_FORMAT, level=DEFAULT_LOGGING_LEVEL)
-        warning('It is not possible to set logging level to %s' % opt.logLevel.upper())
-        warning('Using default setting logging level: %s' % DEFAULT_LOGGING_LEVEL)
+        logging.basicConfig(
+            format=DEFAULT_LOGGING_FORMAT, level=DEFAULT_LOGGING_LEVEL)
+        warning('It is not possible to set logging level to %s' %
+                opt.logLevel.upper())
+        warning('Using default setting logging level: %s' %
+                DEFAULT_LOGGING_LEVEL)
 
     if not args:
         error('It\'s necessary to provide at least one argument')
@@ -376,12 +381,9 @@ def main():
     manager.download()
 
 
-
-if __name__  == '__main__':
+if __name__ == '__main__':
     try:
         main()
     except KeyboardInterrupt:
         info('Program interrupted')
         sys.exit(1)
-
-
