@@ -338,6 +338,9 @@ def main():
     options.add_option(
         '--log', dest='logLevel', action='store', default=DEFAULT_LOGGING_LEVEL,
                       help='Set logging level (debug, info, warning, error, critical)')
+    options.add_option(
+        '--alignment', dest='alignment', action='store_true', default=False,
+        help='Compare subtitles and print their alignment')
 
     parser.add_option_group(options)
     (opt, args) = parser.parse_args()
