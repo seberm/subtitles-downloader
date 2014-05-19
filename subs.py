@@ -2,7 +2,6 @@ import sys
 import os
 import logging
 import urllib2
-import magic
 import math
 
 from logging import debug, info, error, warning, exception
@@ -87,14 +86,24 @@ VIDEO_MIME_TYPES = [
 ]
 
 
-def videoFiletype(file):
-    mimeType = magic.from_file(file, mime=True)
+def videoFiletype(f):
+    try:
+        from magic import magic
+        mimeType = magic.from_file(f, mime=True)
 
-    if mimeType in VIDEO_MIME_TYPES:
-        debug("Detected mime-type: %s" % mimeType)
-        return True
-    else:
-        return False
+        if mimeType in VIDEO_MIME_TYPES:
+            debug("Detected mime-type: %s" % mimeType)
+            return True
+    except ImportError:
+        info("Can't find python-magic module. Trying to get file type without\
+             it")
+
+        fileName, ext = os.path.splitext(f)
+        extensions = ['.mp4', '.avi', '.mov']
+        if ext in extensions:
+            return True
+
+    return False
 
 
 def confirm(msg):
