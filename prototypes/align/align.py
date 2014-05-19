@@ -35,7 +35,7 @@ for s1 in subs1:
                     end=True
                     break
 
-                print fooStartTime,' == ',s2EndTime
+                #print fooStartTime,' == ',s2EndTime
 
                 if fooStartTime > s2EndTime:
                     print 20*' ','\t------\t', foo.text.encode('iso-8859-1')

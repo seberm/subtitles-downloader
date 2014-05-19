@@ -63,6 +63,12 @@ Download czech subtitles for given movie which best match english ref-titles:
 $ python2 ~/scripts/subs.py --language=cze --ref-titles=./ref-eng-titles.srt ./movie.avi
 ```
 
+Align:
+```
+$ python2 ~/scripts/subs.py --align cze-titles.srt eng-titles.srt
+```
+
+
 Possible language codes you can find [here](https://en.wikipedia.org/wiki/List_of_ISO_639-2_codes).
 
 

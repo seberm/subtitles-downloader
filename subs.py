@@ -319,6 +319,46 @@ class Manager:
             self.__getSubFile(rPath)
 
 
+    def printAlign(self, subs):
+        subs1Filename, subs2Filename = subs
+        subs1 = pysrt.open(subs1Filename, encoding='iso-8859-1')
+        subs2 = pysrt.open(subs2Filename, encoding='iso-8859-1')
+
+        for s1 in subs1:
+            s1StartTime = s1.start.seconds + s1.start.minutes * 60 + s1.start.hours * 60 * 60
+            s1EndTime = s1.end.seconds + s1.end.minutes * 60 + s1.end.hours * 60 * 60
+
+            print s1.text.encode('iso-8859-1'),
+
+            end=False
+            for s2 in subs2:
+                if end:
+                    break
+
+                s2StartTime = s2.start.seconds + s2.start.minutes * 60 + s2.start.hours * 60 * 60
+                s2EndTime = s2.end.seconds + s2.end.minutes * 60 + s2.end.hours * 60 * 60
+
+                # Zacinaji pobliz startu s1 nejake tiutlky s2?
+                if math.fabs(s1StartTime - s2StartTime) <= TITLES_ITEM_OFFSET:
+                    # Pokud ano..vypisuje:
+                    print '\t', s2.text.encode('iso-8859-1')
+
+                    for foo in subs2:
+                        fooStartTime = foo.start.seconds + foo.start.minutes * 60 + foo.start.hours * 60 * 60
+                        fooEndTime = foo.end.seconds + foo.end.minutes * 60 + foo.end.hours * 60 * 60
+                        if fooStartTime > s1EndTime:
+                            end=True
+                            break
+
+                        if fooStartTime > s2EndTime:
+                            print '\t', foo.text.encode('iso-8859-1')
+                        else:
+                            continue
+
+                else:
+                    continue
+
+
 def main():
     parser = OptionParser(
         description='%prog Download subtitles for movies from OpenSubtitles',
@@ -348,7 +388,7 @@ def main():
         '--log', dest='logLevel', action='store', default=DEFAULT_LOGGING_LEVEL,
                       help='Set logging level (debug, info, warning, error, critical)')
     options.add_option(
-        '--alignment', dest='alignment', action='store_true', default=False,
+        '--alignment', dest='alignment', action='store', default=False, nargs=2,
         help='Compare subtitles and print their alignment')
 
     parser.add_option_group(options)
@@ -367,7 +407,7 @@ def main():
         warning('Using default setting logging level: %s' %
                 DEFAULT_LOGGING_LEVEL)
 
-    if not args:
+    if not args and not opt.alignment:
         error('It\'s necessary to provide at least one argument')
         sys.exit(1)
 
@@ -376,21 +416,24 @@ def main():
     manager.setRecursiveDownload(opt.recursiveDownload)
     manager.setForce(opt.force)
 
-    if opt.refTitles:
-        if opt.recursiveDownload:
-            error("You cannot use --recursive and --ref-titles arguments togetner. Exiting ...")
-            return
+    if opt.alignment:
+        manager.printAlign(opt.alignment)
+    else:
+        if opt.refTitles:
+            if opt.recursiveDownload:
+                error("You cannot use --recursive and --ref-titles arguments togetner. Exiting ...")
+                return
 
-        debug("Set reference subtitles: %s" % opt.refTitles)
-        manager.setRefTitles(opt.refTitles)
+            debug("Set reference subtitles: %s" % opt.refTitles)
+            manager.setRefTitles(opt.refTitles)
 
-    if opt.allSubtitles:
-        manager.downloadAllSubtitles()
+        if opt.allSubtitles:
+            manager.downloadAllSubtitles()
 
-    if opt.destinationDir:
-        manager.setDestination(opt.destinationDir)
+        if opt.destinationDir:
+            manager.setDestination(opt.destinationDir)
 
-    manager.download()
+        manager.download()
 
 
 if __name__ == '__main__':
