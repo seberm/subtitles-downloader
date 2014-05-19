@@ -282,7 +282,7 @@ class Manager:
     def doSampling(self, f):
         '''Do a sampling on a start time of subtitles'''
         debug("Sampling subtitle file: %s" % f)
-        subs = pysrt.open(f)
+        subs = pysrt.open(f, encoding='windows-1250')
         time = 0
         sampledItems = []
 
